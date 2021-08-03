@@ -1,14 +1,33 @@
+;; Hide startup message
 (setq inhibit-startup-message t)
 (desktop-save-mode 1)
 
+;; Hide clutter
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
 (tooltip-mode -1)
 (menu-bar-mode -1)
 
+;; Disable annyoing warning sound
 (setq visible-bell t)
-(load-theme 'tango-dark)
+
+;; Escape is now exiting from key combinations (like C-g)
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+
+(use-package rainbow-delimiters
+  :hook (prog-mode . rainbow-delimiters-mode))
+
+(use-package doom-modeline
+  :ensure t
+  :init (doom-modeline-mode 1))
+
+(use-package doom-themes
+  :ensure t
+  :config
+  (setq doom-themes-enable-bold t
+	doom-themes-enable-italic t)
+  (load-theme 'doom-dracula t)
+  (doom-themes-org-config))
 
 (set-frame-font "Consolas 12" nil t)
 
@@ -32,6 +51,12 @@
 
 (require 'use-package)
 (setq use-package-always-ensure t)
+
+(use-package which-key
+  :init (which-key-mode)
+  :diminish which-key-mode
+  :config
+  (setq which-key-idle-delay 1))
 
 (use-package ivy
   :diminish
@@ -58,32 +83,11 @@
 	 :map minibuffer-local-map
 	 ("C-r" . 'counsel-minibuffer-history))
   :config
-  (setq ivy-initial-input-alist nil)) ;; Don't start searches with ^
+  (setq ivy-initial-inputs-alist nil)) ;; Don't start searches with ^
 
 (use-package ivy-rich
   :init
   (ivy-rich-mode 1))
-
-(use-package which-key
-  :init (which-key-mode)
-  :diminish which-key-mode
-  :config
-  (setq which-key-idle-delay 1))
-
-(use-package rainbow-delimiters
-  :hook (prog-mode . rainbow-delimiters-mode))
-
-(use-package doom-modeline
-  :ensure t
-  :init (doom-modeline-mode 1))
-
-(use-package doom-themes
-  :ensure t
-  :config
-  (setq doom-themes-enable-bold t
-	doom-themes-enable-italic t)
-  (load-theme 'doom-dracula t)
-  (doom-themes-org-config))
 
 (use-package hydra)
 (defhydra hydra-text-scale (:timeout 3)
@@ -95,9 +99,9 @@
 (use-package general
 :config
   (general-create-definer rune/leader-keys
-    :keymaps '(normal insert visual emacs)
-    :prefix "SPC"
-    :global-prefix "C-SPC"))
+:keymaps '(normal insert visual emacs)
+:prefix "SPC"
+:global-prefix "C-SPC"))
 
 (rune/leader-keys
   "tt" '(counsel-load-theme :which-key "choose theme"))
@@ -105,15 +109,15 @@
 
 (defun rune/evil-hook ()
   (dolist (mode '(custom-mode
-		  eshell-mode
-		  git-rebase-mode
-		  erc-mode
-		  circe-server-mode
-		  circe-chat-mode
-		  curce-query-mode
-		  sauron-mode
-		  term-mode))
-    (add-to-list 'evil-emacs-state-modes mode)))
+		    eshell-mode
+		    git-rebase-mode
+		    erc-mode
+		    circe-server-mode
+		    circe-chat-mode
+		    curce-query-mode
+		    sauron-mode
+		    term-mode))
+	  (add-to-list 'evil-emacs-state-modes mode)))
 
 (use-package evil
   :init
@@ -144,7 +148,7 @@
   :bind-keymap ("C-c p" . projectile-command-map)
   :init
   (when (file-directory-p "~/projects/")
-	   (setq projectile-project-search-path '("~/projects/")))
+     (setq projectile-project-search-path '("~/projects/")))
   (setq projectile-switch-project-action #'projectile-dired))
 
 (use-package counsel-projectile
@@ -156,6 +160,16 @@
   (magit-display-buffer-funciton #'magit-display-buffer-same-window-except-diff-v1))
 
 (defun dw/org-mode-setup ()
+  (dolist (face '((org-level-1 . 2.0)
+	   ( org-level-2 . 1.5)
+	   ( org-level-3 . 1.25)
+	   ( org-level-4 . 1.1)
+	   ( org-level-5 . 1.0)
+	   ( org-level-6 . 1.0)
+	   ( org-level-7 . 1.0)
+	   ( org-level-8 . 1.0)
+	   ( org-level-9 . 1.0)))
+	  (set-face-attribute (car face) nil :font "Consolas" :weight 'regular :height (cdr face)))
   (org-indent-mode)
   (variable-pitch-mode 1)
   (auto-fill-mode 0)
@@ -166,7 +180,7 @@
   :hook (org-mode . dw/org-mode-setup)
   :config
   (setq org-ellipsis " ▾"
-	org-hide-emphasis-markers t))
+  org-hide-emphasis-markers t))
 
 (use-package org-bullets
   :after org
@@ -174,23 +188,10 @@
   :custom
   (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
 
-(with-eval-after-load 'org-faces
-(dolist (face '((org-level-1 . 1.2)
-		(org-level-2 . 1.1)
-		(org-level-3 . 1.05)
-		(org-level-4 . 1.0)))
-  (set-face-attribute (car face) nil :font "Consolas" :weight 'regular :height (cdr face))))
+(defun efs/org-babel-tangle-config()
+  (when (string-match (buffer-file-name)
+	       "init.org"))
+  (let ((org-confirm-babel-evaluate-nil))
+    (org-babel-tangle)))
 
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   '(evil general doom-themes doom-modeline rainbow-delimiters which-key ivy-rich counsel ivy use-package)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
+(add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'efs/org-babel-tangle-config)))
